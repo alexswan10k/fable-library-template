@@ -25,16 +25,20 @@ let run cmd args workingDir =
       info.Arguments <- args) TimeSpan.MaxValue
   if result <> 0 then failwithf "'%s %s' failed" cmd args
 
+let delete file = 
+    if File.Exists(file) 
+    then DeleteFile file
+    else () 
+
 let cleanBundles() = 
     Path.Combine("public", "bundle.js") 
         |> Path.GetFullPath 
-        |> DeleteFile
+        |> delete
     Path.Combine("public", "bundle.js.map") 
         |> Path.GetFullPath
-        |> DeleteFile 
+        |> delete 
 
 Target "Clean" <| fun _ ->
-    printfn "Cleaning project cache"
     [ testsPath </> "bin" 
       testsPath </> "obj" 
       libPath </> "bin"
@@ -78,7 +82,7 @@ Target "PublishNuget" (publish libPath)
 
 Target "RunTests" <| fun _ ->
     printfn "Building %s with Fable" testsPath
-    run dotnetCli "fable npm-run build" testsPath
+    run dotnetCli "fable npm-run build --port free" testsPath
     printfn "Using QUnit cli to run the tests"
     run "npm" "run test" "."
     cleanBundles()

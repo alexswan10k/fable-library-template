@@ -130,8 +130,9 @@ let testCaseAsync (testName: string) (asserterFunc: Asserter -> Async<unit>) : u
 module Extensions = 
 
     type Asserter with
+        /// Fail the test and show the unexpected value serialized in test results
         member test.unexpected (value: 'a) = 
-            test.failwith (sprintf "Unexpected value: \n%s" (toJson value))
+            test.failwith (sprintf "Unexpected value: %s" (toJson value))
 
         /// Uses F#'s structural equality for testing
         member test.areEqual (x: 't) (y: 't) = 
