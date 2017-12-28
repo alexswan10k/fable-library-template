@@ -62,9 +62,6 @@ type Asserter =
     /// The most basic assertion in QUnit, ok() requires just one argument. If the argument evaluates to true, the assertion passes; otherwise, it fails. If a second message argument is provided, it will be displayed in place of the result.
     [<Emit("$0.ok($1, $2)")>]
     abstract ok : 'a -> string -> unit
-    /// Registers a passing test
-    [<Emit("$0.ok(true)")>]
-    abstract pass : unit -> unit
     [<Emit("$0.ok(true, $1)")>]
     abstract passWith : string -> unit
     /// Registers a failing test
@@ -95,7 +92,6 @@ type Asserter =
     abstract propEqual : 'a -> 'b -> unit
     [<Emit("$0.deepEqual($1, $2)")>]
     abstract deepEqual : 'a -> 'b -> unit
-
 [<Emit("QUnit.module($0)")>]
 let registerModule (name: string) : unit = jsNative
 [<Emit("QUnit.module($0, $1)")>]
@@ -133,7 +129,11 @@ module Extensions =
         /// Fail the test and show the unexpected value serialized in test results
         member test.unexpected (value: 'a) = 
             test.failwith (sprintf "Unexpected value: %s" (toJson value))
-
         /// Uses F#'s structural equality for testing
-        member test.areEqual (x: 't) (y: 't) = 
-            test.equal true (x = y)
+        member test.areEqual (expected: 't) (actual: 't) = 
+            if expected = actual
+            then test.pass()
+            else test.failwith (sprintf "Expected %s but got %s" (toJson expected) (toJson actual))
+        /// Registers a passing test
+        member test.pass() = 
+            test.passWith "Passed"
