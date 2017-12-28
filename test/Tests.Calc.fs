@@ -10,7 +10,7 @@ testCase "Add works" <| fun test ->
 
 testCase "Failing test" <| fun test ->
     match [1 .. 3] with
-    | [1;2;3] -> test.pass()
+    | [1;2] -> test.pass()
     | otherwise -> test.unexpected otherwise
 
 testCaseAsync "Async tests too" <| fun test ->
