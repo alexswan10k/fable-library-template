@@ -49,13 +49,15 @@ Target "Clean" <| fun _ ->
 
 
 
-Target "InstallClient" (fun _ ->
+Target "InstallNpmPackages" (fun _ ->
   printfn "Node version:"
   run nodeTool "--version" __SOURCE_DIRECTORY__
   run "npm" "--version" __SOURCE_DIRECTORY__
   run "npm" "install" __SOURCE_DIRECTORY__
-  run dotnetCli "restore" testsPath
 )
+
+Target "RestoreFableTestProject" <| fun _ ->
+  run dotnetCli "restore" testsPath
 
 Target "RunLiveTests" <| fun _ ->
     run dotnetCli "fable npm-run start" testsPath
@@ -79,21 +81,25 @@ let publish projectPath = fun () ->
 
 Target "PublishNuget" (publish libPath)
 
+Target "CompileFableTestProject" <| fun _ ->
+    run dotnetCli "fable npm-run build --port free" testsPath
 
 Target "RunTests" <| fun _ ->
     printfn "Building %s with Fable" testsPath
-    run dotnetCli "fable npm-run build --port free" testsPath
     printfn "Using QUnit cli to run the tests"
     run "npm" "run test" "."
     cleanBundles()
 
 "Clean"
-  ==> "InstallClient"
+  ==> "InstallNpmPackages"
+  ==> "RestoreFableTestProject"
   ==> "RunLiveTests"
 
 
 "Clean"
- ==> "InstallClient"
+ ==> "InstallNpmPackages"
+ ==> "RestoreFableTestProject"
+ ==> "CompileFableTestProject"
  ==> "RunTests"
 
 RunTargetOrDefault "RunTests"
