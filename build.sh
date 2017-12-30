@@ -4,6 +4,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
+rm -r .fake
+
 PAKET_EXE=.paket/paket.exe
 FAKE_EXE=packages/build/FAKE/tools/FAKE.exe
 

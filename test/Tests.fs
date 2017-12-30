@@ -1,4 +1,4 @@
-module Tests.Calc
+module Tests
 
 open QUnit
 
@@ -18,8 +18,8 @@ testCase "Cube works" <| fun test ->
 testCase "factorial works" <| fun test ->
     test.areEqual 120 (Calc.factorial 5)
 
-testCaseAsync "Async test" <| fun test ->
-    async {
-        do! Async.Sleep 1000
-        test.pass()
-    }
+testCase "factorial(6) = 720" <| fun test ->
+    test.areEqual 720 (Calc.factorial 6)
+
+testCase "factorial(6) = 720" <| fun test ->
+    test.areEqual 720 (Calc.factorial 6)
