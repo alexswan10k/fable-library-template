@@ -38,16 +38,16 @@ let cleanBundles() =
         |> Path.GetFullPath
         |> delete 
 
-Target "Clean" <| fun _ ->
+let cleanCacheDirs() = 
     [ testsPath </> "bin" 
       testsPath </> "obj" 
       libPath </> "bin"
       libPath </> "obj" ]
     |> CleanDirs
 
+Target "Clean" <| fun _ ->
+    cleanCacheDirs()
     cleanBundles()
-
-
 
 Target "InstallNpmPackages" (fun _ ->
   printfn "Node version:"
