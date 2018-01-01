@@ -30,9 +30,9 @@ run() {
 
 # remove paket.lock
 [ -e paket.lock ] && rm paket.lock
-[ -e paket-files/paket.restore.cache ] && rm paket-files/paket.restore.cache
+[ -e ./paket-files/paket.restore.cached ] && rm ./paket-files/paket.restore.cached
 
-rm -rf /src/bin
-rm -rf /src/obj
-rm -rf /test/bin
-rm -rf /test/obj
+rm -rf ./src/bin
+rm -rf ./src/obj
+rm -rf ./test/bin
+rm -rf ./test/obj
