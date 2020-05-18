@@ -1,33 +1,46 @@
-#r @"packages/build/FAKE/tools/FakeLib.dll"
+
+#r "paket: 
+nuget Fake.Core.Process
+nuget Fake.IO.FileSystem
+nuget Fake.Core.Target //"
+#load ".fake/build.fsx/intellisense.fsx"
 
 open System
 open System.IO
-open Fake
+//open Fake.DotNet
+open Fake.Core
+open Fake.IO
+open Fake.IO.FileSystemOperators
+open Fake.Core.TargetOperators
+//open Fake.Tools
 
 let libPath = "./src"
 let testsPath = "./test"
 
 let platformTool tool winTool =
-  let tool = if isUnix then tool else winTool
+  let tool = if Environment.isUnix then tool else winTool
   tool
-  |> ProcessHelper.tryFindFileOnPath
+  |> ProcessUtils.tryFindFileOnPath
   |> function Some t -> t | _ -> failwithf "%s not found" tool
 
 let nodeTool = platformTool "node" "node.exe"
+let npmTool = platformTool "npm" "npm.cmd"
 
-let mutable dotnetCli = "dotnet"
+let dotnetCli = "dotnet"
 
 let run cmd args workingDir =
   let result =
-    ExecProcess (fun info ->
-      info.FileName <- cmd
-      info.WorkingDirectory <- workingDir
-      info.Arguments <- args) TimeSpan.MaxValue
+    Process.execSimple (fun info -> {
+      info with
+        FileName = cmd
+        WorkingDirectory = workingDir
+        Arguments = args
+    }) TimeSpan.MaxValue
   if result <> 0 then failwithf "'%s %s' failed" cmd args
 
 let delete file = 
     if File.Exists(file) 
-    then DeleteFile file
+    then File.delete file
     else () 
 
 let cleanBundles() = 
@@ -43,32 +56,32 @@ let cleanCacheDirs() =
       testsPath </> "obj" 
       libPath </> "bin"
       libPath </> "obj" ]
-    |> CleanDirs
+    |> Shell.cleanDirs
 
-Target "Clean" <| fun _ ->
+Target.create "Clean" <| fun _ ->
     cleanCacheDirs()
     cleanBundles()
 
-Target "InstallNpmPackages" (fun _ ->
+Target.create "InstallNpmPackages" (fun _ ->
   printfn "Node version:"
   run nodeTool "--version" __SOURCE_DIRECTORY__
-  run "npm" "--version" __SOURCE_DIRECTORY__
-  run "npm" "install" __SOURCE_DIRECTORY__
+  run npmTool "--version" __SOURCE_DIRECTORY__
+  run npmTool "install" __SOURCE_DIRECTORY__
 )
 
-Target "RestoreFableTestProject" <| fun _ ->
+Target.create "RestoreFableTestProject" <| fun _ ->
   run dotnetCli "restore" testsPath
 
-Target "RunLiveTests" <| fun _ ->
-    run dotnetCli "fable npm-run start" testsPath
+Target.create "RunLiveTests" <| fun _ ->
+    run npmTool "run start" testsPath
 
-let publish projectPath = fun () ->
+let publish projectPath = fun t ->
     [ projectPath </> "bin"
-      projectPath </> "obj" ] |> CleanDirs
+      projectPath </> "obj" ] |> Shell.cleanDirs
     run dotnetCli "restore --no-cache" projectPath
     run dotnetCli "pack -c Release" projectPath
     let nugetKey =
-        match environVarOrNone "NUGET_KEY" with
+        match Environment.environVarOrNone "NUGET_KEY" with
         | Some nugetKey -> nugetKey
         | None -> failwith "The Nuget API key must be set in a NUGET_KEY environmental variable"
     let nupkg = 
@@ -79,15 +92,15 @@ let publish projectPath = fun () ->
     let pushCmd = sprintf "nuget push %s -s nuget.org -k %s" nupkg nugetKey
     run dotnetCli pushCmd projectPath
 
-Target "PublishNuget" (publish libPath)
+Target.create "PublishNuget" (publish libPath)
 
-Target "CompileFableTestProject" <| fun _ ->
-    run dotnetCli "fable npm-run build --port free" testsPath
+Target.create "CompileFableTestProject" <| fun _ ->
+    run npmTool "run build" testsPath
 
-Target "RunTests" <| fun _ ->
+Target.create "RunTests" <| fun _ ->
     printfn "Building %s with Fable" testsPath
     printfn "Using QUnit cli to run the tests"
-    run "npm" "run test" "."
+    run npmTool "run test" "."
     cleanBundles()
 
 "Clean"
@@ -102,4 +115,4 @@ Target "RunTests" <| fun _ ->
  ==> "CompileFableTestProject"
  ==> "RunTests"
 
-RunTargetOrDefault "RunTests"
+Target.runOrDefault "RunTests"

@@ -128,12 +128,12 @@ module Extensions =
     type Asserter with
         /// Fail the test and show the unexpected value serialized in test results
         member test.unexpected (value: 'a) = 
-            test.failwith (sprintf "Unexpected value: %s" (toJson value))
+            test.failwith (sprintf "Unexpected value: %s" (Fable.Core.JS.JSON.stringify value))
         /// Uses F#'s structural equality for testing
         member test.areEqual (expected: 't) (actual: 't) = 
             if expected = actual
             then test.pass()
-            else test.failwith (sprintf "Expected %s but got %s" (toJson expected) (toJson actual))
+            else test.failwith (sprintf "Expected %s but got %s" (Fable.Core.JS.JSON.stringify expected) (Fable.Core.JS.JSON.stringify actual))
         /// Registers a passing test
         member test.pass() = 
             test.passWith "Passed"

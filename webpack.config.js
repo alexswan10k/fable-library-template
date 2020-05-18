@@ -1,23 +1,19 @@
 var path = require("path");
 var webpack = require("webpack");
-var fableUtils = require("fable-utils");
 
 
 function resolve(filePath) {
   return path.join(__dirname, filePath)
 }
 
-var babelOptions = fableUtils.resolveBabelOptions({
+var babelOptions = {
   presets: [
-    ["env", {
-      "targets": {
-        "browsers": ["last 2 versions"]
-      },
-      "modules": false
+    ["@babel/preset-env", {
+        "modules": false,
+        "useBuiltIns": "usage",
     }]
-  ],
-  plugins: ["transform-runtime"]
-});
+  ]
+};
 
 var isProduction = process.argv.indexOf("-p") >= 0;
 console.log("Bundling for " + (isProduction ? "production" : "development") + "...");
@@ -41,11 +37,7 @@ module.exports = {
       {
         test: /\.fs(x|proj)?$/,
         use: {
-          loader: "fable-loader",
-          options: {
-            babel: babelOptions,
-            define: isProduction ? [] : ["DEBUG"]
-          }
+          loader: "fable-loader"
         }
       },
       {
